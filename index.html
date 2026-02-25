@@ -154,8 +154,9 @@
             </div>
             <div class="prompt-text" id="img-prompt-text"></div>
           </div>
-          <button class="img-gen-btn" onclick="openImage()">🎨 在新标签页生成 &amp; 预览图片</button>
-          <div class="img-note">图片加载后可右键保存 · 每次点击生成不同版本</div>
+          <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:12px 14px;font-size:12px;color:#92400e;line-height:1.7">
+            💡 复制上方 Prompt，粘贴到 <strong>Midjourney</strong> / <strong>DALL·E</strong> / <strong>Stable Diffusion</strong> 即可生成项目拼图
+          </div>
         </div>
       </div>
     </div>
@@ -239,12 +240,12 @@ Return ONLY valid JSON, no markdown, no code fences:
     const res = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 4096, messages: [{ role: 'user', content: userPrompt }] })
+      body: JSON.stringify({ prompt: userPrompt })
     });
     if (!res.ok) { errEl.textContent = `API 错误 ${res.status}`; errEl.classList.remove('hidden'); return; }
     const data = await res.json();
-    if (data.error) { errEl.textContent = `错误：${data.error.message}`; errEl.classList.remove('hidden'); return; }
-    const text = data.content?.map(b => b.text || '').join('') || '';
+    if (data.error) { errEl.textContent = `错误：${data.error}`; errEl.classList.remove('hidden'); return; }
+    const text = data.text || '';
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) { errEl.textContent = '内容解析失败，请重试'; errEl.classList.remove('hidden'); return; }
     const parsed = JSON.parse(match[0]);
