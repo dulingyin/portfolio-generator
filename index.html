@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🎨 作品集内容生成器</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4ff; min-height: 100vh; }
+  .header { background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 20px 24px; color: white; }
+  .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .header p { font-size: 13px; opacity: 0.85; margin-top: 3px; }
+  .tabs { background: white; border-bottom: 1px solid #e5e7eb; display: flex; }
+  .tab { padding: 12px 20px; border: none; background: none; font-weight: 600; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; color: #9ca3af; transition: all 0.2s; }
+  .tab.active { color: #6366f1; border-bottom-color: #6366f1; }
+  .container { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+  .card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .label { display: block; font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 6px; }
+  .label span { font-weight: 400; color: #9ca3af; }
+  input, textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1.5px solid #e5e7eb; font-size: 14px; outline: none; font-family: inherit; transition: border-color 0.2s; margin-bottom: 16px; }
+  input:focus, textarea:focus { border-color: #6366f1; }
+  textarea { resize: vertical; }
+  .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+  .mode-btn { padding: 14px 10px; border-radius: 12px; border: 2px solid #e5e7eb; background: white; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .mode-btn.active { border-color: #6366f1; background: #eef2ff; }
+  .mode-btn .icon { font-size: 20px; margin-bottom: 4px; }
+  .mode-btn .title { font-weight: 700; font-size: 13px; color: #374151; }
+  .mode-btn.active .title { color: #6366f1; }
+  .mode-btn .sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .tag { padding: 6px 14px; border-radius: 20px; border: 1.5px solid #e5e7eb; background: white; color: #6b7280; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .tag.active { border-color: #6366f1; background: #6366f1; color: white; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 4px; }
+  .section { margin-bottom: 20px; border-radius: 12px; overflow: hidden; border: 1.5px solid rgba(0,0,0,0.06); }
+  .section-header { padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; }
+  .section-header span { font-weight: 700; color: white; font-size: 13px; }
+  .section-body { padding: 14px 16px; background: white; }
+  .field { margin-bottom: 14px; }
+  .field-label { font-size: 12px; font-weight: 600; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; color: #6366f1; }
+  .field-text { font-size: 13px; color: #374151; line-height: 1.8; white-space: pre-line; }
+  .copy-btn { font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid #d1d5db; background: white; color: #6b7280; cursor: pointer; transition: all 0.2s; }
+  .copy-btn.copied { background: #6366f1; color: white; border-color: #6366f1; }
+  .prompt-box { border-radius: 10px; border: 1px solid #e5e7eb; overflow: hidden; margin-bottom: 14px; }
+  .prompt-header { background: #e0f2fe; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; }
+  .prompt-header span { font-weight: 600; font-size: 12px; color: #0ea5e9; }
+  .prompt-text { padding: 12px 14px; font-size: 12px; color: #374151; line-height: 1.8; font-family: monospace; background: #fafafa; }
+  .gen-btn { width: 100%; padding: 13px; border-radius: 10px; border: none; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 4px; }
+  .gen-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .img-gen-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(135deg, #0ea5e9, #6366f1); color: white; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .img-note { margin-top: 8px; font-size: 11px; color: #9ca3af; text-align: center; }
+  .spinner { width: 24px; height: 24px; border: 3px solid #e5e7eb; border-top-color: #6366f1; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error { color: #ef4444; font-size: 13px; margin-top: 10px; }
+  .hidden { display: none; }
+  .project-title { font-weight: 800; font-size: 17px; margin-bottom: 4px; color: #1f2937; }
+  .project-meta { font-size: 12px; color: #9ca3af; margin-bottom: 16px; }
+  .copy-all { margin-top: 8px; padding-top: 12px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+  .history-item { background: white; border-radius: 12px; padding: 20px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); cursor: pointer; border-left: 3px solid #6366f1; }
+  .history-name { font-weight: 700; font-size: 14px; color: #1f2937; }
+  .history-meta { font-size: 11px; color: #9ca3af; margin-top: 3px; }
+  .history-hook { font-size: 12px; color: #6b7280; margin-top: 8px; line-height: 1.6; }
+  .empty { text-align: center; padding: 60px; color: #9ca3af; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎨 作品集内容生成器</h1>
+  <p>留学设计项目 · 社交媒体 Carousel</p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('generate', event)">✏️ 生成内容</button>
+  <button class="tab" id="tab-history" onclick="switchTab('history', event)">📁 历史记录</button>
+</div>
+
+<div class="container">
+  <div id="page-generate">
+    <div class="card">
+      <div style="font-size:12px;font-weight:600;color:#6b7280;margin-bottom:10px;">选择模式</div>
+      <div class="mode-grid">
+        <div class="mode-btn active" id="mode-auto" onclick="setMode('auto')">
+          <div class="icon">✨</div>
+          <div class="title">一键生成</div>
+          <div class="sub">AI 自动发想项目</div>
+        </div>
+        <div class="mode-btn" id="mode-concept" onclick="setMode('concept')">
+          <div class="icon">💡</div>
+          <div class="title">输入概念</div>
+          <div class="sub">我有自己的想法</div>
+        </div>
+      </div>
+
+      <div id="input-auto">
+        <label class="label">关键词 / 主题方向 <span>（可选）</span></label>
+        <input type="text" id="keyword" placeholder="e.g. 老龄化、气候焦虑、数字身份..." />
+      </div>
+      <div id="input-concept" class="hidden">
+        <label class="label">一句话项目概念 *</label>
+        <textarea id="concept" rows="3" placeholder="e.g. 设计一个帮助老人感知数字时间流逝的服务系统..."></textarea>
+      </div>
+
+      <div style="font-size:12px;font-weight:600;color:#6b7280;margin-bottom:8px;">设计方向</div>
+      <div class="tags" id="tags-direction">
+        <div class="tag active" onclick="setTag('direction',this)">交互设计 Interaction Design</div>
+        <div class="tag" onclick="setTag('direction',this)">思辨设计 Critical Design</div>
+        <div class="tag" onclick="setTag('direction',this)">推测设计 Speculative Design</div>
+        <div class="tag" onclick="setTag('direction',this)">服务设计 Service Design</div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#6b7280;margin-bottom:8px;">目标平台</div>
+          <div class="tags" id="tags-platform">
+            <div class="tag active" onclick="setTag('platform',this)">Instagram</div>
+            <div class="tag" onclick="setTag('platform',this)">LinkedIn</div>
+            <div class="tag" onclick="setTag('platform',this)">小红书</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#6b7280;margin-bottom:8px;">语气风格</div>
+          <div class="tags" id="tags-tone">
+            <div class="tag active" onclick="setTag('tone',this)">学术感</div>
+            <div class="tag" onclick="setTag('tone',this)">亲切分享</div>
+            <div class="tag" onclick="setTag('tone',this)">故事化叙述</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="error hidden" id="error-msg"></div>
+      <button class="gen-btn" onclick="generate()" id="gen-btn">✨ 一键生成项目内容</button>
+    </div>
+
+    <div class="card hidden" id="loading-box" style="text-align:center;padding:40px">
+      <div class="spinner"></div>
+      <div style="margin-top:16px;color:#6b7280;font-size:14px">正在生成你的作品集内容...</div>
+    </div>
+
+    <div id="result-box" class="hidden">
+      <div class="project-title" id="result-name"></div>
+      <div class="project-meta" id="result-meta"></div>
+      <div class="section">
+        <div class="section-header" style="background:#6366f1"><span>📝 Post 文案</span></div>
+        <div class="section-body" id="post-body"></div>
+      </div>
+      <div class="section">
+        <div class="section-header" style="background:#0ea5e9"><span>🖼️ 项目拼图 Image Prompt</span></div>
+        <div class="section-body">
+          <div style="font-size:12px;color:#6b7280;margin-bottom:10px">一张包含所有版面的完整项目展示拼图</div>
+          <div class="prompt-box">
+            <div class="prompt-header">
+              <span>📐 Multi-panel Portfolio Spread</span>
+              <button class="copy-btn" onclick="copyEl(this,'img-prompt-text')">复制</button>
+            </div>
+            <div class="prompt-text" id="img-prompt-text"></div>
+          </div>
+          <button class="img-gen-btn" onclick="openImage()">🎨 在新标签页生成 &amp; 预览图片</button>
+          <div class="img-note">图片加载后可右键保存 · 每次点击生成不同版本</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-history" class="hidden">
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<script>
+let currentMode = 'auto';
+let history = JSON.parse(localStorage.getItem('ph') || '[]');
+const tags = { direction: '交互设计 Interaction Design', platform: 'Instagram', tone: '学术感' };
+
+function switchTab(tab, e) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  if (e) e.target.classList.add('active');
+  document.getElementById('page-generate').classList.toggle('hidden', tab !== 'generate');
+  document.getElementById('page-history').classList.toggle('hidden', tab !== 'history');
+  if (tab === 'history') renderHistory();
+}
+
+function setMode(m) {
+  currentMode = m;
+  document.getElementById('mode-auto').classList.toggle('active', m === 'auto');
+  document.getElementById('mode-concept').classList.toggle('active', m === 'concept');
+  document.getElementById('input-auto').classList.toggle('hidden', m !== 'auto');
+  document.getElementById('input-concept').classList.toggle('hidden', m !== 'concept');
+  document.getElementById('gen-btn').textContent = m === 'auto' ? '✨ 一键生成项目内容' : '🚀 生成内容';
+}
+
+function setTag(group, el) {
+  document.querySelectorAll(`#tags-${group} .tag`).forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  tags[group] = el.textContent.trim();
+}
+
+function copyEl(btn, id) {
+  navigator.clipboard.writeText(document.getElementById(id).textContent);
+  btn.textContent = '✓ 已复制'; btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 1500);
+}
+
+function copyRaw(btn, text) {
+  navigator.clipboard.writeText(text);
+  btn.textContent = '✓ 已复制'; btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 1500);
+}
+
+function openImage() {
+  const prompt = document.getElementById('img-prompt-text').textContent;
+  window.open(`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=1000&nologo=true&seed=${Math.floor(Math.random()*99999)}`, '_blank');
+}
+
+async function generate() {
+  const errEl = document.getElementById('error-msg');
+  errEl.classList.add('hidden');
+  if (currentMode === 'concept' && !document.getElementById('concept').value.trim()) {
+    errEl.textContent = '请输入你的项目概念'; errEl.classList.remove('hidden'); return;
+  }
+
+  const keyword = document.getElementById('keyword').value.trim();
+  const concept = document.getElementById('concept').value.trim();
+  const { direction, platform, tone } = tags;
+
+  const userPrompt = `You are a design portfolio content strategist.
+${currentMode === 'auto'
+  ? `Design direction: ${direction}${keyword ? `. Theme hint: "${keyword}"` : '. No theme — invent something original.'}\nInvent a compelling original project. Give it a creative bilingual name.`
+  : `Student concept: "${concept}". Design direction: ${direction}.\nExpand the concept into a full portfolio post.`}
+Platform: ${platform} | Tone: ${tone}
+
+Return ONLY valid JSON, no markdown, no code fences:
+{"projectName":"bilingual name","hook":"one punchy Chinese sentence","idea":"1-2 Chinese sentences","process":"1-2 Chinese sentences","reflection":"1-2 Chinese sentences","tips":"1. tip\\n2. tip\\n3. tip (Chinese)","hashtags":"#tag1 #tag2 #tag3 #tag4 #tag5","imagePrompt":"English prompt for ONE composite multi-panel portfolio spread: cover panel with title, research/HMW panel, design process panel with sketches, final mockup panel, reflection panel — all in one cohesive grid. Color palette matching ${direction}. End with: Behance portfolio overview, multi-panel grid, 4:5 ratio, professional."}`;
+
+  document.getElementById('loading-box').classList.remove('hidden');
+  document.getElementById('result-box').classList.add('hidden');
+  document.getElementById('gen-btn').disabled = true;
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 4096, messages: [{ role: 'user', content: userPrompt }] })
+    });
+    if (!res.ok) { errEl.textContent = `API 错误 ${res.status}`; errEl.classList.remove('hidden'); return; }
+    const data = await res.json();
+    if (data.error) { errEl.textContent = `错误：${data.error.message}`; errEl.classList.remove('hidden'); return; }
+    const text = data.content?.map(b => b.text || '').join('') || '';
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) { errEl.textContent = '内容解析失败，请重试'; errEl.classList.remove('hidden'); return; }
+    const parsed = JSON.parse(match[0]);
+    const entry = { ...parsed, meta: { mode: currentMode, keyword, concept, direction, platform, tone }, id: Date.now() };
+    history = [entry, ...history.slice(0, 19)];
+    localStorage.setItem('ph', JSON.stringify(history));
+    renderResult(entry);
+    document.getElementById('tab-history').textContent = `📁 历史记录 (${history.length})`;
+  } catch(e) {
+    errEl.textContent = `生成失败：${e.message}`; errEl.classList.remove('hidden');
+  } finally {
+    document.getElementById('loading-box').classList.add('hidden');
+    document.getElementById('gen-btn').disabled = false;
+  }
+}
+
+function renderResult(r) {
+  document.getElementById('result-name').textContent = r.projectName || '';
+  document.getElementById('result-meta').textContent = `${r.meta.direction} · ${r.meta.platform} · ${r.meta.tone}`;
+  const fields = [
+    ['🎯 Hook 开场', r.hook], ['💡 项目 Idea', r.idea], ['⚙️ 设计过程', r.process],
+    ['🪞 思考与反思', r.reflection], ['💎 Tips', r.tips], ['#️⃣ Hashtags', r.hashtags]
+  ];
+  const fullText = fields.map(f => f[1]).join('\n\n');
+  let html = fields.map(([label, val]) => `
+    <div class="field">
+      <div class="field-label"><span>${label}</span><button class="copy-btn" onclick="copyRaw(this,${JSON.stringify(val||'')})">复制</button></div>
+      <div class="field-text">${(val||'').replace(/</g,'&lt;')}</div>
+    </div>`).join('');
+  html += `<div class="copy-all"><span style="font-size:12px;color:#9ca3af">一键复制全文</span><button class="copy-btn" onclick="copyRaw(this,${JSON.stringify(fullText)})">复制</button></div>`;
+  document.getElementById('post-body').innerHTML = html;
+  document.getElementById('img-prompt-text').textContent = r.imagePrompt || '';
+  document.getElementById('result-box').classList.remove('hidden');
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (!history.length) { el.innerHTML = '<div class="empty">还没有历史记录，快去生成第一个项目吧！</div>'; return; }
+  el.innerHTML = history.map((h, i) => `
+    <div class="history-item" onclick="loadHistory(${i})">
+      <div class="history-name">${h.projectName||'未命名'}</div>
+      <div class="history-meta">${h.meta?.direction||''} · ${h.meta?.platform||''}</div>
+      <div class="history-hook">${(h.hook||'').slice(0,80)}...</div>
+    </div>`).join('');
+}
+
+function loadHistory(i) {
+  switchTab('generate', null);
+  document.querySelectorAll('.tab')[0].classList.add('active');
+  document.querySelectorAll('.tab')[1].classList.remove('active');
+  renderResult(history[i]);
+}
+</script>
+</body>
+</html>
