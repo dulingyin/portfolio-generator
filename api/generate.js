@@ -9,7 +9,6 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).end(); return; }
 
   try {
-    // 手动读取 body
     const raw = await new Promise((resolve, reject) => {
       let data = '';
       req.on('data', chunk => data += chunk);
@@ -17,33 +16,41 @@ module.exports = async function handler(req, res) {
       req.on('error', reject);
     });
 
+    const { prompt } = JSON.parse(raw);
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    const body = JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { maxOutputTokens: 4096, temperature: 0.9 }
+    });
+
     const options = {
-      hostname: 'api.anthropic.com',
-      path: '/v1/messages',
+      hostname: 'generativelanguage.googleapis.com',
+      path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(raw),
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
+        'Content-Length': Buffer.byteLength(body)
       }
     };
 
     const data = await new Promise((resolve, reject) => {
       const request = https.request(options, (response) => {
-        let body = '';
-        response.on('data', chunk => body += chunk);
+        let responseBody = '';
+        response.on('data', chunk => responseBody += chunk);
         response.on('end', () => {
-          try { resolve({ status: response.statusCode, body: JSON.parse(body) }); }
+          try { resolve({ status: response.statusCode, body: JSON.parse(responseBody) }); }
           catch(e) { reject(e); }
         });
       });
       request.on('error', reject);
-      request.write(raw);
+      request.write(body);
       request.end();
     });
 
-    res.status(data.status).json(data.body);
+    // 提取文本内容
+    const text = data.body?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    res.status(data.status).json({ text });
   } catch(e) {
     res.status(500).json({ error: e.message });
   }
